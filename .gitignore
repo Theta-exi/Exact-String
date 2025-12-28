@@ -1,0 +1,12 @@
+# 构建产生的文件
+build/
+dist/
+*.spec
+__pycache__/
+
+# 测试文件
+test*.py
+
+*.bat
+
+*.exe
