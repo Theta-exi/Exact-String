@@ -308,10 +308,10 @@ def divide(a:str, b:str) -> str:
         return sign + shift('.' + ans, shift_diff)
 
 def floor_divide(a:str, b:str) -> str:
-    ans = divide(a, b).split('.')[0] + '.'
-    if ans[0] == '-':
+    ans = divide(a, b).split('.')
+    if ans[1] and ans[0][0] == '-':
         ans = minus(ans, '1')
-    return times(ans, b)
+    return times(ans[0] + '.', b)
 
 def modulo(a:str, b:str) -> str:
     ans = floor_divide(a, b)
@@ -428,7 +428,23 @@ def complex_modulo(z1:str, z2:str) -> str:
 
 class StrNumber:
     def __init__(self, value: str):
-        self.num, self.sign = num_format(value)
+        if isinstance(value, StrNumber):
+            self.value = value.value
+            self.sign = value.sign
+            self.num = value.num
+            return
+        if isinstance(value, str):
+            self.num, self.sign = num_format(value)
+        if isinstance(value, int):
+            if value < 0:
+                self.num = str(-value) + '.'
+                self.sign = '-'
+            else:
+                self.num = str(value) + '.'
+                self.sign = ''
+        if isinstance(value, float):
+            warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
+            self.num, self.sign = num_format(str(value))
         self.value = self.sign + self.num
 
     def __add__(self, other):
@@ -593,21 +609,30 @@ class StrNumber:
         self.value = modulo(self.value, other.value)
         return self
 
-    def __pow__(self, power: int):
-        if isinstance(power, float):
-            raise Exception('小数不能为幂')
-        if isinstance(power, StrNumber):
+    def __pow__(self, other: int):
+        if isinstance(other, float):
+            warnings.warn('传入了float作为幂, 向下取整转为int')
+            other = int(other // 1)
+        if isinstance(other, StrNumber):
             warnings.warn('传入了StrNumber作为幂, 向下取整转为int')
-            power = int(power)
-        return StrNumber(power(self.value, power))
+            other = int(other)
+        return StrNumber(power(self.value, other))
     
-    def __rpow__(self, power: int): # :TODO 待完善
-        if isinstance(power, float):
-            raise Exception('小数不能为幂')
-        if isinstance(power, StrNumber):
+    def __rpow__(self, other: int):
+        if isinstance(other, float):
+            warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
+        warnings.warn('传入了StrNumber作为幂, 向下取整转为int')
+        return StrNumber(power(str(other), int(self)))
+    
+    def __ipow__(self, other: int):
+        if isinstance(other, float):
+            warnings.warn('传入了float作为幂, 向下取整转为int')
+            other = int(other // 1)
+        if isinstance(other, StrNumber):
             warnings.warn('传入了StrNumber作为幂, 向下取整转为int')
-            power = int(power)
-        return StrNumber(power(power, self.value))
+            other = int(other)
+        self.value = power(self.value, other)
+        return self
 
     def __str__(self):
         return f'StrNumber({self.value})'
@@ -616,13 +641,16 @@ class StrNumber:
         return print_format(self.value)
     
     def __neg__(self):
-        return StrNumber(minus('0', self.value))
+        value = self.num
+        if self.sign == '':
+            value = '-' + value
+        return StrNumber(value)
     
     def __pos__(self):
-        return self
+        return StrNumber(self)
     
     def __abs__(self):
-        return StrNumber(self.value.strip('-'))
+        return StrNumber(self.num)
     
     def __eq__(self, other):
         return self.value == other.value
@@ -634,19 +662,34 @@ class StrNumber:
         return self.value != '.'
     
     def __lt__(self, other):
-        return compare(self.value, other.value) == -1
+        if self.sign != other.sign:
+            return self.sign == '-'
+        else:
+            ans = compare(self.num, other.num)
+            if self.sign == '':
+                return ans == -1
+            return ans == 1
 
     def __le__(self, other):
-        return compare(self.value, other.value) <= 0
+        return not self > other
 
     def __gt__(self, other):
-        return compare(self.value, other.value) == 1
+        if self.sign != other.sign:
+            return self.sign == ''
+        else:
+            ans = compare(self.num, other.num)
+            if self.sign == '':
+                return ans == 1
+            return ans == -1
 
     def __ge__(self, other):
-        return compare(self.value, other.value) >= 0
+        return not self < other
     
     def __int__(self):
-        return int((self // 1).value[:-1])
+        ans = self // 1
+        if ans.value == '.':
+            return 0
+        return int(ans.value[:-1])
     
     def __float__(self):
         if self.value == '.':
