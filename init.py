@@ -1,4 +1,5 @@
 import warnings
+from functools import total_ordering
 
 CHAR_TO_INT = {str(i): i for i in range(10)}
 INT_TO_CHAR = [(str(i%10),i//10) for i in range(0,90)] + [(str(i%10),i//10) for i in range(-10,0)]
@@ -426,6 +427,7 @@ def complex_modulo(z1:str, z2:str) -> str:
     y = modulo(y, y2)
     return x + 'i' + y
 
+@total_ordering
 class StrNumber:
     def __init__(self, value: str):
         if isinstance(value, StrNumber):
@@ -433,190 +435,231 @@ class StrNumber:
             self.sign = value.sign
             self.num = value.num
             return
-        if isinstance(value, str):
+        elif isinstance(value, str):
             self.num, self.sign = num_format(value)
-        if isinstance(value, int):
+        elif isinstance(value, int):
             if value < 0:
                 self.num = str(-value) + '.'
                 self.sign = '-'
             else:
                 self.num = str(value) + '.'
                 self.sign = ''
-        if isinstance(value, float):
+        elif isinstance(value, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             self.num, self.sign = num_format(str(value))
+        else:
+            raise Exception('类型错误: 不支持的类型')
         self.value = self.sign + self.num
 
     def __add__(self, other):
         if isinstance(other, int):
             return StrNumber(plus(self.value, str(other)))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(plus(self.value, str(other)))
-        return StrNumber(plus(self.value, other.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(plus(self.value, other.value))
+        return NotImplemented
     
     def __radd__(self, other):
         if isinstance(other, int):
             return StrNumber(plus(str(other), self.value))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(plus(str(other), self.value))
-        return StrNumber(plus(other.value, self.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(plus(other.value, self.value))
+        return NotImplemented
     
     def __iadd__(self, other):
         if isinstance(other, int):
             self.value = plus(self.value, str(other))
-            return self
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             self.value = plus(self.value, str(other))
-            return self
-        self.value = plus(self.value, other.value)
+        elif isinstance(other, StrNumber):
+            self.value = plus(self.value, other.value)
+        else:
+            return NotImplemented
+        self.num, self.sign = num_format(self.value)
         return self
 
     def __sub__(self, other):
         if isinstance(other, int):
             return StrNumber(minus(self.value, str(other)))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(minus(self.value, str(other)))
-        return StrNumber(minus(self.value, other.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(minus(self.value, other.value))
+        return NotImplemented
     
     def __rsub__(self, other):
         if isinstance(other, int):
             return StrNumber(minus(str(other), self.value))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(minus(str(other), self.value))
-        return StrNumber(minus(other.value, self.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(minus(other.value, self.value))
+        return NotImplemented
     
     def __isub__(self, other):
         if isinstance(other, int):
             self.value = minus(self.value, str(other))
-            return self
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             self.value = minus(self.value, str(other))
-            return self
-        self.value = minus(self.value, other.value)
+        elif isinstance(other, StrNumber):
+            self.value = minus(self.value, other.value)
+        else:
+            return NotImplemented
+        self.num, self.sign = num_format(self.value)
         return self
 
     def __mul__(self, other):
         if isinstance(other, int):
             return StrNumber(times(self.value, str(other)))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(times(self.value, str(other)))
-        return StrNumber(times(self.value, other.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(times(self.value, other.value))
+        return NotImplemented
     
     def __rmul__(self, other):
         if isinstance(other, int):
             return StrNumber(times(str(other), self.value))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(times(str(other), self.value))
-        return StrNumber(times(other.value, self.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(times(other.value, self.value))
+        return NotImplemented
     
     def __imul__(self, other):
         if isinstance(other, int):
             self.value = times(self.value, str(other))
-            return self
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             self.value = times(self.value, str(other))
-            return self
-        self.value = times(self.value, other.value)
+        elif isinstance(other, StrNumber):
+            self.value = times(self.value, other.value)
+        else:
+            return NotImplemented
+        self.num, self.sign = num_format(self.value)
         return self
 
     def __truediv__(self, other):
         if isinstance(other, int):
             return StrNumber(divide(self.value, str(other)))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(divide(self.value, str(other)))
-        return StrNumber(divide(self.value, other.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(divide(self.value, other.value))
+        return NotImplemented
     
     def __rtruediv__(self, other):
         if isinstance(other, int):
             return StrNumber(divide(str(other), self.value))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(divide(str(other), self.value))
-        return StrNumber(divide(other.value, self.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(divide(other.value, self.value))
+        return NotImplemented
     
     def __itruediv__(self, other):
         if isinstance(other, int):
             self.value = divide(self.value, str(other))
-            return self
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             self.value = divide(self.value, str(other))
-            return self
-        self.value = divide(self.value, other.value)
+        elif isinstance(other, StrNumber):
+            self.value = divide(self.value, other.value)
+        else:
+            return NotImplemented
+        self.num, self.sign = num_format(self.value)
         return self
     
     def __floordiv__(self, other):
         if isinstance(other, int):
             return StrNumber(floor_divide(self.value, str(other)))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(floor_divide(self.value, str(other)))
-        return StrNumber(floor_divide(self.value, other.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(floor_divide(self.value, other.value))
+        return NotImplemented
     
     def __rfloordiv__(self, other):
         if isinstance(other, int):
             return StrNumber(floor_divide(str(other), self.value))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(floor_divide(str(other), self.value))
-        return StrNumber(floor_divide(other.value, self.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(floor_divide(other.value, self.value))
+        return NotImplemented
     
     def __ifloordiv__(self, other):
         if isinstance(other, int):
             self.value = floor_divide(self.value, str(other))
-            return self
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             self.value = floor_divide(self.value, str(other))
-            return self
-        self.value = floor_divide(self.value, other.value)
+        elif isinstance(other, StrNumber):
+            self.value = floor_divide(self.value, other.value)
+        else:
+            return NotImplemented
+        self.num, self.sign = num_format(self.value)
         return self
     
     def __mod__(self, other):
         if isinstance(other, int):
             return StrNumber(modulo(self.value, str(other)))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(modulo(self.value, str(other)))
-        return StrNumber(modulo(self.value, other.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(modulo(self.value, other.value))
+        return NotImplemented
     
     def __rmod__(self, other):
         if isinstance(other, int):
             return StrNumber(modulo(str(other), self.value))
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             return StrNumber(modulo(str(other), self.value))
-        return StrNumber(modulo(other.value, self.value))
+        elif isinstance(other, StrNumber):
+            return StrNumber(modulo(other.value, self.value))
+        return NotImplemented
     
     def __imod__(self, other):
         if isinstance(other, int):
             self.value = modulo(self.value, str(other))
-            return self
-        if isinstance(other, float):
+        elif isinstance(other, float):
             warnings.warn('警告: 浮点数存在精度误差, 谨慎使用浮点数')
             self.value = modulo(self.value, str(other))
-            return self
-        self.value = modulo(self.value, other.value)
+        elif isinstance(other, StrNumber):
+            self.value = modulo(self.value, other.value)
+        else:
+            return NotImplemented
+        self.num, self.sign = num_format(self.value)
         return self
 
     def __pow__(self, other: int):
         if isinstance(other, float):
             warnings.warn('传入了float作为幂, 向下取整转为int')
             other = int(other // 1)
-        if isinstance(other, StrNumber):
+        elif isinstance(other, StrNumber):
             warnings.warn('传入了StrNumber作为幂, 向下取整转为int')
             other = int(other)
-        return StrNumber(power(self.value, other))
+        if isinstance(other, int):
+            return StrNumber(power(self.value, other))
+        else:
+            return NotImplemented
     
     def __rpow__(self, other: int):
         if isinstance(other, float):
@@ -628,11 +671,15 @@ class StrNumber:
         if isinstance(other, float):
             warnings.warn('传入了float作为幂, 向下取整转为int')
             other = int(other // 1)
-        if isinstance(other, StrNumber):
+        elif isinstance(other, StrNumber):
             warnings.warn('传入了StrNumber作为幂, 向下取整转为int')
             other = int(other)
-        self.value = power(self.value, other)
-        return self
+        if isinstance(other, int):
+            self.value = power(self.value, other)
+            self.num, self.sign = num_format(self.value)
+            return self
+        else:
+            return NotImplemented
 
     def __str__(self):
         return f'StrNumber({self.value})'
@@ -653,15 +700,22 @@ class StrNumber:
         return StrNumber(self.num)
     
     def __eq__(self, other):
+        if not isinstance(other, StrNumber):
+            try:
+                other = StrNumber(other) # str int float -> StrNumber
+            except:
+                return NotImplemented
         return self.value == other.value
-    
-    def __ne__(self, other):
-        return self.value != other.value
     
     def __bool__(self):
         return self.value != '.'
     
     def __lt__(self, other):
+        if not isinstance(other, StrNumber):
+            try:
+                other = StrNumber(other) # str int float -> StrNumber
+            except:
+                return NotImplemented
         if self.sign != other.sign:
             return self.sign == '-'
         else:
@@ -674,6 +728,11 @@ class StrNumber:
         return not self > other
 
     def __gt__(self, other):
+        if not isinstance(other, StrNumber):
+            try:
+                other = StrNumber(other) # str int float -> StrNumber
+            except:
+                return NotImplemented
         if self.sign != other.sign:
             return self.sign == ''
         else:
